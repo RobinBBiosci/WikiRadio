@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wiki Commons Deep Radio</title>
+    <style>
+        :root {
+            --bg-color: #10141d;
+            --container-bg: #ffffff;
+            --text-color: #202122;
+            --accent-color: #366735;
+            --secondary-text: #54595d;
+            --border-color: #eaecf0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .app-layout {
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            gap: 25px;
+            max-width: 1100px;
+            width: 100%;
+            align-items: start;
+        }
+
+        @media (max-width: 850px) {
+            .app-layout { grid-template-columns: 1fr; }
+        }
+
+        .radio-container {
+            background: var(--container-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-sizing: border-box;
+            transition: background 0.3s ease;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        h1 { font-size: 1.8rem; margin: 0; color: var(--accent-color); }
+        h2 { font-size: 0.85rem; color: var(--secondary-text); font-weight: 500; margin: 0 0 20px 0; text-align: left; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .utility-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .circle-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            background: var(--container-bg);
+            color: var(--text-color);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            transition: all 0.2s ease;
+        }
+        .circle-btn:hover {
+            border-color: var(--text-color);
+            transform: scale(1.05);
+        }
+
+        .color-drawer {
+            display: none;
+            background: var(--container-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+        }
+        .drawer-section { margin-bottom: 12px; }
+        .drawer-section:last-child { margin-bottom: 0; }
+        .drawer-title {
+            font-weight: bold;
+            color: var(--secondary-text);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+        .swatch-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 1px solid #72777d;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+        .swatch:hover { transform: scale(1.15); }
+        
+        .metadata-box {
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            min-height: 240px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            overflow-y: auto;
+        }
+        .meta-line { margin-bottom: 10px; display: flex; flex-direction: column; }
+        .meta-label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2px;
+        }
+        .meta-label { color: var(--secondary-text); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; }
+        
+        .desc-toggle-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+        }
+        
+        .meta-value { color: var(--text-color); word-break: break-word; }
+        .meta-value a { color: var(--accent-color); text-decoration: underline; font-weight: 500; }
+        
+        .description-content {
+            transition: max-height 0.2s ease-out;
+            overflow: hidden;
+        }
+        .description-content.collapsed {
+            max-height: 4.5em;
+            position: relative;
+        }
+        .description-content.collapsed::after {
+            content: "";
+            position: absolute;
+            bottom: 0; right: 0; left: 0;
+            height: 1.5em;
+            background: linear-gradient(transparent, var(--container-bg));
+            pointer-events: none;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            color: var(--secondary-text);
+            font-weight: bold;
+        }
+        .scrub-bar {
+            flex-grow: 1;
+            margin: 0 12px;
+            accent-color: var(--accent-color);
+            cursor: pointer;
+            height: 6px;
+        }
+
+        .controls, .sub-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        button:not(.circle-btn):not(.desc-toggle-btn) {
+            background: var(--container-bg);
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:not(.circle-btn):not(.desc-toggle-btn):hover { background: var(--border-color); }
+        button.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
+        
+        #playBtn { background: var(--accent-color); color: white; border: none; padding: 12px 28px; font-size: 1.05rem; }
+        
+        .volume-container { display: flex; align-items: center; gap: 8px; color: var(--secondary-text); }
+        .volume-slider { accent-color: var(--accent-color); width: 80px; }
+
+        .history-container {
+            background: var(--container-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        .history-header h3 { margin: 0; font-size: 1.1rem; color: var(--accent-color); }
+        
+        .history-table-wrapper { max-height: 400px; overflow-y: auto; }
+        .history-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }
+        .history-table th { color: var(--secondary-text); padding: 8px 4px; border-bottom: 1px solid var(--border-color); }
+        .history-table td { padding: 10px 4px; border-bottom: 1px solid var(--border-color); }
+        
+        .history-track-title { color: var(--text-color); cursor: pointer; font-weight: 600; text-decoration: none; }
+        .history-track-title:hover { color: var(--accent-color); text-decoration: underline; }
+        .history-file-link { color: var(--accent-color); }
+        .history-duration { text-align: right; }
+    </style>
+</head>
+<body>
+
+<div class="app-layout">
+    <div class="radio-container">
+        <div class="header-row">
+            <h1 id="appMainTitle">WikiRadio</h1>
+            <div class="utility-buttons">
+                <button class="circle-btn" onclick="applyRandomBranding()" title="Randomize Wiki Color Theme" aria-label="Randomize color theme">🎨</button>
+                <button class="circle-btn" onclick="toggleColorDrawer()" title="Custom Brush Controls" aria-label="Toggle custom color controls">🖌️</button>
+            </div>
+        </div>
+        <h2>Your Open Radio</h2>
+        
+        <div class="color-drawer" id="colorDrawer">
+            <div class="drawer-section">
+                <div class="drawer-title">Base Background Theme</div>
+                <div class="swatch-group" id="bgSwatches"></div>
+            </div>
+            <div class="drawer-section">
+                <div class="drawer-title">Container Blocks</div>
+                <div class="swatch-group" id="containerSwatches"></div>
+            </div>
+            <div class="drawer-section">
+                <div class="drawer-title">Primary Body Text</div>
+                <div class="swatch-group" id="textSwatches"></div>
+            </div>
+            <div class="drawer-section">
+                <div class="drawer-title">Secondary Labels</div>
+                <div class="swatch-group" id="secondaryTextSwatches"></div>
+            </div>
+            <div class="drawer-section">
+                <div class="drawer-title">Accent Highlights</div>
+                <div class="swatch-group" id="accentSwatches"></div>
+            </div>
+        </div>
+
+        <div class="metadata-box" id="metaBox">
+            <div style="text-align: center; color: var(--secondary-text); padding-top: 80px; font-weight: 500;">Click "Tune In" to start scanning categories</div>
+        </div>
+
+        <div class="progress-container">
+            <span id="currentTime">0:00</span>
+            <input type="range" id="scrubBar" class="scrub-bar" value="0" min="0" max="100" step="1" aria-label="Seek">
+            <span id="durationTime">0:00</span>
+        </div>
+        
+        <div class="controls">
+            <button id="prevBtn" onclick="playPrevious()">⏮ Prev</button>
+            <button id="playBtn" onclick="toggleRadio()">Tune In</button>
+            <button id="skipBtn" onclick="playNext()">Skip ⏭</button>
+        </div>
+
+        <div class="sub-controls">
+            <button id="loopBtn" onclick="toggleLoop()">Loop: OFF</button>
+            <button id="pipBtn" onclick="toggleMiniPlayer()" aria-label="Pop out mini player">🔲 Pop Out</button>
+            <div class="volume-container">
+                <span aria-hidden="true">🔊</span>
+                <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.05" value="0.7" aria-label="Volume">
+            </div>
+        </div>
+
+        <audio id="audioPlayer" crossorigin="anonymous"></audio>
+    </div>
+
+    <div class="history-container" id="historyContainer">
+        <div class="history-header">
+            <h3 id="historyPanelTitle">Session History</h3>
+            <button id="minimizeBtn" onclick="toggleMinimizeHistory()" style="padding: 4px 10px; font-size: 0.75rem;">Minimize</button>
+        </div>
+        <div class="history-table-wrapper" id="historyWrapper">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Song Title</th>
+                        <th style="width: 35%;">Repository File</th>
+                        <th style="width: 15%; text-align: right;">Length</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <tr id="historyPlaceholder">
+                        <td colspan="3" style="color: var(--secondary-text); font-style: italic; text-align: center; padding: 20px 0;">No tracks logged.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Declared up front so the theme functions below (which run at load time
+    // via applyRandomBranding()) can safely reference it before the PiP
+    // window has ever been opened.
+    let pipWindow = null;
+
+    // The Document Picture-in-Picture window is a separate document and does
+    // NOT inherit CSS from the opener, so whenever the app's color theme
+    // changes we copy the current custom property values across manually.
+    const THEME_VARS = ['--bg-color', '--container-bg', '--text-color', '--accent-color', '--secondary-text', '--border-color'];
+
+    function syncPiPTheme() {
+        if (!pipWindow) return;
+        const rootStyle = getComputedStyle(document.documentElement);
+        const pipRoot = pipWindow.document.documentElement;
+        THEME_VARS.forEach(name => {
+            const value = rootStyle.getPropertyValue(name).trim();
+            if (value) pipRoot.style.setProperty(name, value);
+        });
+    }
+
+    const safeBgColors = ["#10141d", "#202122", "#f8f9fa", "#e8edf8", "#f4f1ea"];
+    const safeContainerColors = ["#ffffff", "#202122", "#1a1a1a", "#fdfdfd"];
+    const safeAccentColors = ["#366735", "#3a67d2", "#dd3333", "#007788", "#b85c00"];
+    const safeTextColors = ["#202122", "#ffffff", "#333333", "#f8f9fa", "#ffcc00"];
+    const safeSecondaryTextColors = ["#54595d", "#a2a9b1", "#72777d", "#e0e0e0", "#d1a100"];
+
+    const wikiPalettes = [
+        { bg: "#10141d", container: "#ffffff", text: "#202122", accent: "#366735", secondary: "#54595d", border: "#eaecf0" },
+        { bg: "#202122", container: "#ffffff", text: "#202122", accent: "#3a67d2", secondary: "#72777d", border: "#eaecf0" },
+        { bg: "#f8f9fa", container: "#202122", text: "#ffffff", accent: "#34c759", secondary: "#a2a9b1", border: "#333333" },
+        { bg: "#72777d", container: "#ffffff", text: "#202122", accent: "#dd3333", secondary: "#54595d", border: "#eaecf0" }
+    ];
+
+    function applyProperties(bg, container, text, accent, secondary, border) {
+        const root = document.documentElement;
+        root.style.setProperty('--bg-color', bg);
+        root.style.setProperty('--container-bg', container);
+        root.style.setProperty('--text-color', text);
+        root.style.setProperty('--accent-color', accent);
+        root.style.setProperty('--secondary-text', secondary);
+        root.style.setProperty('--border-color', border || "#eaecf0");
+        syncPiPTheme();
+    }
+
+    function setContrastingTextColors(containerHex) {
+        const hex = containerHex.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        
+        if (brightness < 125) {
+            document.documentElement.style.setProperty('--text-color', '#ffffff');
+            document.documentElement.style.setProperty('--secondary-text', '#a2a9b1');
+            document.documentElement.style.setProperty('--border-color', '#444444');
+        } else {
+            document.documentElement.style.setProperty('--text-color', '#202122');
+            document.documentElement.style.setProperty('--secondary-text', '#54595d');
+            document.documentElement.style.setProperty('--border-color', '#eaecf0');
+        }
+        syncPiPTheme();
+    }
+
+    function applyRandomBranding() {
+        const selected = wikiPalettes[Math.floor(Math.random() * wikiPalettes.length)];
+        applyProperties(selected.bg, selected.container, selected.text, selected.accent, selected.secondary, selected.border);
+    }
+    applyRandomBranding();
+
+    function toggleColorDrawer() {
+        const drawer = document.getElementById('colorDrawer');
+        drawer.style.display = (drawer.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function setupColorPickerUI() {
+        const bgArea = document.getElementById('bgSwatches');
+        const containerArea = document.getElementById('containerSwatches');
+        const textArea = document.getElementById('textSwatches');
+        const secondaryTextArea = document.getElementById('secondaryTextSwatches');
+        const accentArea = document.getElementById('accentSwatches');
+
+        safeBgColors.forEach(color => {
+            const div = document.createElement('div');
+            div.className = 'swatch';
+            div.style.background = color;
+            div.onclick = () => {
+                document.documentElement.style.setProperty('--bg-color', color);
+                syncPiPTheme();
+            };
+            bgArea.appendChild(div);
+        });
+
+        safeContainerColors.forEach(color => {
+            const div = document.createElement('div');
+            div.className = 'swatch';
+            div.style.background = color;
+            div.onclick = () => {
+                document.documentElement.style.setProperty('--container-bg', color);
+                setContrastingTextColors(color); // also syncs the PiP theme
+            };
+            containerArea.appendChild(div);
+        });
+
+        safeTextColors.forEach(color => {
+            const div = document.createElement('div');
+            div.className = 'swatch';
+            div.style.background = color;
+            div.onclick = () => {
+                document.documentElement.style.setProperty('--text-color', color);
+                syncPiPTheme();
+            };
+            textArea.appendChild(div);
+        });
+
+        safeSecondaryTextColors.forEach(color => {
+            const div = document.createElement('div');
+            div.className = 'swatch';
+            div.style.background = color;
+            div.onclick = () => {
+                document.documentElement.style.setProperty('--secondary-text', color);
+                syncPiPTheme();
+            };
+            secondaryTextArea.appendChild(div);
+        });
+
+        safeAccentColors.forEach(color => {
+            const div = document.createElement('div');
+            div.className = 'swatch';
+            div.style.background = color;
+            div.onclick = () => {
+                document.documentElement.style.setProperty('--accent-color', color);
+                syncPiPTheme();
+            };
+            accentArea.appendChild(div);
+        });
+    }
+    setupColorPickerUI();
+
+    // Escapes untrusted text so it can be safely interpolated into innerHTML
+    // (both as text content and inside double-quoted attributes).
+    function escapeHTML(str) {
+        if (str === null || str === undefined) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    const audioPlayer = document.getElementById('audioPlayer');
+    const playBtn = document.getElementById('playBtn');
+    const metaBox = document.getElementById('metaBox');
+    const scrubBar = document.getElementById('scrubBar');
+    const currentTimeEl = document.getElementById('currentTime');
+    const durationTimeEl = document.getElementById('durationTime');
+    const loopBtn = document.getElementById('loopBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const historyTableBody = document.getElementById('historyTableBody');
+    const historyWrapper = document.getElementById('historyWrapper');
+    const minimizeBtn = document.getElementById('minimizeBtn');
+
+    // Architecture Variables
+    let rawSearchPool = [];       // Incoming pool from Wikimedia
+    let verifiedQueue = [];       // Lookahead queue: Only tracks confirmed > 60s
+    let historicPlayedTracks = [];// Tracks previously listened to in this session
+    let seenRawTitles = new Set();// Every raw file title we've already pulled, to avoid duplicates
+    let currentActiveIndex = -1;  // Pointer location in the verified queue
+    let isPlaying = false;
+    let isLooping = false;
+    let isFetchingBatch = false;
+    let isFillingLookahead = false;
+    const TARGET_LOOKAHEAD_SIZE = 5; // Keep 5 valid tracks ahead at all times
+
+    async function toggleRadio() {
+        if (currentActiveIndex === -1) {
+            isPlaying = true;
+            metaBox.innerHTML = `<div style="text-align: center; color: var(--secondary-text); padding-top: 80px; font-weight: 500;">Scanning...<br><span style="font-size:0.8rem; color:var(--accent-color);">Finding the first file...</span></div>`;
+            
+            // Wait for the first pass so we can tell the user if it failed.
+            // (playTrackFromQueue is still called eagerly inside this, as soon
+            // as the first valid track is found, so playback isn't delayed.)
+            await fillLookaheadQueue();
+
+            if (verifiedQueue.length === 0) {
+                isPlaying = false;
+                const reason = lastBatchFetchFailed
+                    ? "Couldn't reach Wikimedia Commons. Check your connection and try again."
+                    : "No qualifying tracks were found. Try again in a moment.";
+                metaBox.innerHTML = `
+                    <div style="text-align: center; color: var(--secondary-text); padding-top: 60px; font-weight: 500;">
+                        ${escapeHTML(reason)}<br><br>
+                        <button onclick="toggleRadio()">Retry</button>
+                    </div>
+                `;
+            }
+        } else if (!isPlaying) {
+            audioPlayer.play();
+            isPlaying = true;
+            updateButtonStates();
+        } else {
+            audioPlayer.pause();
+            isPlaying = false;
+            updateButtonStates();
+        }
+    }
+
+    async function fillLookaheadQueue() {
+        if (isFillingLookahead) return;
+        isFillingLookahead = true;
+
+        // Loop until we hit our safety buffer threshold
+        while (verifiedQueue.length <= (currentActiveIndex + TARGET_LOOKAHEAD_SIZE)) {
+            if (rawSearchPool.length < 5) {
+                await fetchTrueRandomBatch();
+                if (rawSearchPool.length === 0) break; // Break if API fails or empty
+            }
+
+            const potentialTrack = rawSearchPool.shift();
+            if (seenRawTitles.has(potentialTrack.title)) continue; // Skip duplicates from random search results
+            seenRawTitles.add(potentialTrack.title);
+
+            try {
+                const trackData = await fetchTrackData(potentialTrack.title);
+                const duration = await probeTrackDuration(trackData.streamUrl);
+
+                // Verification criteria validation: only accept tracks we could
+                // actually confirm are >= 60s. Tracks whose duration couldn't be
+                // determined (slow probe, unsupported codec, etc.) are skipped
+                // rather than let through, since that would defeat the point
+                // of filtering out short clips.
+                if (duration !== null && duration >= 60) {
+                    const meta = trackData.metadata;
+                    const cleanTitle = meta?.ObjectName?.value || potentialTrack.title.replace("File:", "");
+                    const authorHTML = sanitizeHTML(meta?.Artist?.value, "Unknown Artist");
+                    const authorTextOnly = authorHTML.replace(/<[^>]*>/g, "");
+
+                    let date = meta?.DateTimeOriginal?.value ? meta.DateTimeOriginal.value.replace(/<[^>]*>/g, "").trim() : "";
+                    if (!date || date.toLowerCase() === "unknown date") {
+                        date = trackData.historyTimestamp ? new Date(trackData.historyTimestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : "Unknown Date";
+                    }
+
+                    const licenseName = meta?.LicenseShortName?.value || "CC License";
+                    const licenseUrl = getLicenseLink(meta, trackData.descriptionUrl);
+                    
+                    verifiedQueue.push({
+                        title: cleanTitle,
+                        rawTitle: potentialTrack.title,
+                        streamUrl: trackData.streamUrl,
+                        descriptionUrl: trackData.descriptionUrl,
+                        authorHTML,
+                        authorTextOnly,
+                        date,
+                        licenseName,
+                        categories: trackData.categories,
+                        attributionHTML: `<a href="${escapeHTML(trackData.descriptionUrl)}" target="_blank" rel="noopener noreferrer">${escapeHTML(authorTextOnly)}</a>, <a href="${escapeHTML(licenseUrl)}" target="_blank" rel="noopener noreferrer">${escapeHTML(licenseName)}</a>, via Wikimedia Commons`,
+                        descriptionHTML: sanitizeHTML(meta?.ImageDescription?.value || "No description provided.", "No description provided.")
+                    });
+
+                    // OPTIMIZATION TRICK: If this is the absolute first track found, play it immediately!
+                    if (currentActiveIndex === -1 && verifiedQueue.length === 1) {
+                        playTrackFromQueue(0);
+                        updateButtonStates();
+                        
+                        // Briefly yield execution context so the UI responds instantly and audio pipeline buffers
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                } else {
+                    console.log(`Background skipped track (${duration === null ? 'duration undetermined' : Math.round(duration) + 's'}): ${potentialTrack.title}`);
+                }
+            } catch (e) {
+                console.warn("Background lookup error bypassing asset", e);
+            }
+        }
+        isFillingLookahead = false;
+    }
+
+    // Probes a remote audio file's duration without downloading the whole
+    // thing, by fetching a byte-range and decoding it in a throwaway Audio
+    // element. Escalates to a bigger chunk/longer timeout once before giving
+    // up, to reduce false negatives on slow connections or unusual codecs.
+    // Returns the duration in seconds, or null if it could not be determined.
+    async function probeTrackDuration(streamUrl) {
+        const attempts = [
+            { bytes: 150000, timeoutMs: 700 },
+            { bytes: 500000, timeoutMs: 1500 }
+        ];
+        for (const attempt of attempts) {
+            const duration = await probeDurationChunk(streamUrl, attempt.bytes, attempt.timeoutMs);
+            if (duration !== null) return duration;
+        }
+        return null;
+    }
+
+    function probeDurationChunk(streamUrl, byteLimit, timeoutMs) {
+        return new Promise((resolve) => {
+            let tempUrl = null;
+            let ghostAudio = null;
+            let settled = false;
+
+            const cleanup = () => {
+                if (tempUrl) { URL.revokeObjectURL(tempUrl); tempUrl = null; }
+                if (ghostAudio) {
+                    ghostAudio.onloadedmetadata = null;
+                    ghostAudio.onerror = null;
+                    ghostAudio.src = '';
+                    ghostAudio = null;
+                }
+            };
+            const finish = (value) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                cleanup();
+                resolve(value);
+            };
+            const timer = setTimeout(() => finish(null), timeoutMs);
+
+            fetch(streamUrl, { headers: { 'Range': `bytes=0-${byteLimit}` } })
+                .then(response => response.blob())
+                .then(blob => {
+                    if (settled) return; // timed out while the fetch was in flight
+                    tempUrl = URL.createObjectURL(blob);
+                    ghostAudio = new Audio(tempUrl);
+                    ghostAudio.onloadedmetadata = () => {
+                        const d = ghostAudio.duration;
+                        finish(isFinite(d) && d > 0 ? d : null);
+                    };
+                    ghostAudio.onerror = () => finish(null);
+                })
+                .catch(() => finish(null));
+        });
+    }
+
+    let lastBatchFetchFailed = false;
+
+    async function fetchTrueRandomBatch() {
+        if (isFetchingBatch) return;
+        isFetchingBatch = true;
+        const url = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=incategory:"Audio files of music" (filetype:audio)&srnamespace=6&srlimit=50&srsort=random&format=json&origin=*`;
+        
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data?.query?.search) {
+                rawSearchPool.push(...data.query.search.map(item => ({ title: item.title })));
+                lastBatchFetchFailed = false;
+            } else {
+                lastBatchFetchFailed = true;
+            }
+        } catch (err) {
+            console.error("Index buffer refresh issue", err);
+            lastBatchFetchFailed = true;
+        }
+        isFetchingBatch = false;
+    }
+
+    async function fetchTrackData(fileTitle) {
+        // Query imageinfo alongside categories (including hidden categories via clprop=hidden)
+        const url = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(fileTitle)}&prop=imageinfo|categories&iiprop=url|extmetadata|timestamp&clprop=hidden&cllimit=max&format=json&origin=*`;
+        const response = await fetch(url);
+        const data = await response.json();
+        const pages = data.query.pages;
+        const pageId = Object.keys(pages)[0];
+        const pageData = pages[pageId];
+        const imageinfo = pageData.imageinfo[0];
+        
+        // Extract category list
+        const categories = (pageData.categories || []).map(cat => ({
+            name: cat.title.replace(/^Category:/, ""),
+            fullTitle: cat.title,
+            isHidden: cat.hidden !== undefined
+        }));
+
+        return {
+            streamUrl: imageinfo.url,
+            descriptionUrl: imageinfo.descriptionurl,
+            historyTimestamp: imageinfo.timestamp,
+            metadata: imageinfo.extmetadata,
+            categories: categories
+        };
+    }
+
+    let currentActiveTrackPayload = null;
+
+    function playTrackFromQueue(index) {
+        if (index < 0 || index >= verifiedQueue.length) return;
+        currentActiveIndex = index;
+        const track = verifiedQueue[currentActiveIndex];
+
+        currentActiveTrackPayload = track;
+
+        // Instant handover setup
+        audioPlayer.src = track.streamUrl;
+
+        // Quietly top off the lookahead pool while this song starts playing
+        fillLookaheadQueue();
+    }
+
+    audioPlayer.addEventListener('loadedmetadata', () => {
+        if (!currentActiveTrackPayload) return;
+        durationTimeEl.innerText = formatTime(audioPlayer.duration);
+        updateUIDashboard();
+        logSessionTrack(currentActiveTrackPayload.title, currentActiveTrackPayload.descriptionUrl, currentActiveIndex, formatTime(audioPlayer.duration));
+        if (pipWindow) updatePiPContent();
+        if (isPlaying) audioPlayer.play().catch(() => {});
+    });
+
+    async function playNext() {
+        const nextIdx = currentActiveIndex + 1;
+        
+        if (nextIdx >= verifiedQueue.length) {
+            metaBox.innerHTML = `<div style="text-align: center; color: var(--secondary-text); padding-top: 80px; font-weight: 500;">Buffering open airwaves...</div>`;
+            await fillLookaheadQueue();
+        }
+
+        if (nextIdx < verifiedQueue.length) {
+            playTrackFromQueue(nextIdx);
+        } else {
+            isPlaying = false;
+            updateButtonStates();
+            const reason = lastBatchFetchFailed
+                ? "Couldn't reach Wikimedia Commons. Check your connection and try again."
+                : "No more qualifying tracks were found. Try again in a moment.";
+            metaBox.innerHTML = `
+                <div style="text-align: center; color: var(--secondary-text); padding-top: 60px; font-weight: 500;">
+                    ${escapeHTML(reason)}<br><br>
+                    <button onclick="playNext()">Retry</button>
+                </div>
+            `;
+        }
+    }
+
+    function playPrevious() {
+        if (currentActiveIndex > 0) {
+            playTrackFromQueue(currentActiveIndex - 1);
+        }
+    }
+
+    // Wikimedia metadata (titles, descriptions, artist fields) comes from
+    // publicly-editable wiki pages, so it must be treated as untrusted HTML.
+    // Only a small allowlist of harmless tags survive; everything else
+    // (scripts, event handler attributes like onerror, styles, etc.) is
+    // stripped. Anchor tags are re-validated to only allow http(s)/relative
+    // links, "red links" (unwritten wiki pages) are collapsed to plain text,
+    // and surviving links are forced to open safely in a new tab.
+    const SANITIZE_ALLOWED_TAGS = new Set(['A', 'B', 'I', 'EM', 'STRONG', 'BR', 'SPAN']);
+
+    function sanitizeHTML(inputStr, fallback) {
+        const safeFallback = escapeHTML(fallback || "");
+        if (!inputStr) return safeFallback;
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(inputStr, 'text/html');
+
+        function sanitizeNode(node) {
+            [...node.childNodes].forEach(child => {
+                if (child.nodeType === Node.ELEMENT_NODE) {
+                    if (!SANITIZE_ALLOWED_TAGS.has(child.tagName)) {
+                        // Disallowed tag (script, img, div, etc.) - keep only its
+                        // text content, discard the tag and all its attributes.
+                        const textNode = doc.createTextNode(child.textContent);
+                        child.parentNode.replaceChild(textNode, child);
+                        return;
+                    }
+
+                    if (child.tagName === 'A' && child.classList.contains('new')) {
+                        // Red link (page doesn't exist yet) -> render as plain text
+                        const textNode = doc.createTextNode(child.textContent);
+                        child.parentNode.replaceChild(textNode, child);
+                        return;
+                    }
+
+                    // Strip every attribute, then re-add only the safe ones we need.
+                    const href = child.getAttribute('href');
+                    [...child.attributes].forEach(attr => child.removeAttribute(attr.name));
+
+                    if (child.tagName === 'A') {
+                        let safeHref = href || "";
+                        if (safeHref.startsWith('/')) {
+                            safeHref = 'https://commons.wikimedia.org' + safeHref;
+                        }
+                        if (/^https?:\/\//i.test(safeHref)) {
+                            child.setAttribute('href', safeHref);
+                            child.setAttribute('target', '_blank');
+                            child.setAttribute('rel', 'noopener noreferrer');
+                        } else {
+                            // Not a safe http(s) link (e.g. javascript:) - drop the href entirely.
+                        }
+                    }
+
+                    sanitizeNode(child);
+                } else if (child.nodeType !== Node.TEXT_NODE) {
+                    // Remove comments, processing instructions, etc.
+                    child.parentNode.removeChild(child);
+                }
+            });
+        }
+
+        sanitizeNode(doc.body);
+        return doc.body.innerHTML || safeFallback;
+    }
+
+    function getLicenseLink(meta, fallbackUrl) {
+        if (meta?.LicenseUrl?.value) return meta.LicenseUrl.value;
+        const shortName = meta?.LicenseShortName?.value || "";
+        if (shortName.includes("BY-SA 3.0")) return "https://creativecommons.org/licenses/by-sa/3.0";
+        if (shortName.includes("BY-SA 4.0")) return "https://creativecommons.org/licenses/by-sa/4.0";
+        if (shortName.includes("Public domain")) return "https://creativecommons.org/publicdomain/mark/1.0/";
+        return fallbackUrl;
+    }
+
+    function updateUIDashboard() {
+        if(!currentActiveTrackPayload) return;
+        const p = currentActiveTrackPayload;
+
+        // Render hyperlinked category tags
+        let categoryHTML = "No categories found.";
+        if (p.categories && p.categories.length > 0) {
+            categoryHTML = p.categories.map(cat => {
+                const catUrl = `https://commons.wikimedia.org/wiki/${encodeURIComponent(cat.fullTitle)}`;
+                return `<a href="${escapeHTML(catUrl)}" target="_blank" rel="noopener noreferrer">${escapeHTML(cat.name)}</a>`;
+            }).join(' • ');
+        }
+
+        metaBox.innerHTML = `
+            <div class="meta-line"><span class="meta-label">Title:</span><span class="meta-value">${escapeHTML(p.title)}</span></div>
+            <div class="meta-line"><span class="meta-label">Author:</span><span class="meta-value">${p.authorHTML}</span></div>
+            
+            <div class="meta-line">
+                <div class="meta-label-row">
+                    <span class="meta-label">Description:</span>
+                    <button class="desc-toggle-btn" id="descToggle" onclick="toggleDescriptionText()">Minimize</button>
+                </div>
+                <div class="meta-value description-content" id="descContent">${p.descriptionHTML}</div>
+            </div>
+            
+            <div class="meta-line"><span class="meta-label">Date:</span><span class="meta-value">${escapeHTML(p.date)}</span></div>
+            <div class="meta-line"><span class="meta-label">Attribution:</span><span class="meta-value">${p.attributionHTML}</span></div>
+            <div class="meta-line"><span class="meta-label">Link:</span><span class="meta-value"><a href="${escapeHTML(p.descriptionUrl)}" target="_blank" rel="noopener noreferrer">${escapeHTML(p.rawTitle)}</a></span></div>
+
+             <div class="meta-line">
+                <div class="meta-label-row">
+                    <span class="meta-label">Categories:</span>
+                    <button class="desc-toggle-btn" id="catToggle" onclick="toggleCategoriesText()">Show all categories</button>
+                </div>
+                <div class="meta-value description-content collapsed" id="catContent" style="display: none;">${categoryHTML}</div>
+            </div>
+        `;
+    }
+
+    function toggleDescriptionText() {
+        const content = document.getElementById('descContent');
+        const btn = document.getElementById('descToggle');
+        if (content.classList.contains('collapsed')) {
+            content.classList.remove('collapsed');
+            btn.innerText = "Minimize";
+        } else {
+            content.classList.add('collapsed');
+            btn.innerText = "Expand";
+        }
+    }
+
+    function toggleCategoriesText() {
+        const content = document.getElementById('catContent');
+        const btn = document.getElementById('catToggle');
+        if (content.style.display === "none") {
+            content.style.display = "block";
+            content.classList.remove('collapsed');
+            btn.innerText = "Hide categories";
+        } else {
+            content.style.display = "none";
+            btn.innerText = "Show all categories";
+        }
+    }
+
+    function updateButtonStates() {
+        playBtn.innerText = isPlaying ? "Pause" : "Play";
+        if(pipWindow) {
+            const pipPlay = pipWindow.document.getElementById('pipPlayBtn');
+            if(pipPlay) pipPlay.innerText = isPlaying ? "⏸" : "▶";
+        }
+    }
+    
+    function toggleLoop() {
+        isLooping = !isLooping;
+        audioPlayer.loop = isLooping;
+        loopBtn.innerText = isLooping ? "Loop: ON" : "Loop: OFF";
+        loopBtn.classList.toggle('active', isLooping);
+        if(pipWindow) {
+            const pipLoop = pipWindow.document.getElementById('pipLoopBtn');
+            if(pipLoop) pipLoop.style.background = isLooping ? "var(--accent-color)" : "var(--border-color, #444)";
+        }
+    }
+
+    function logSessionTrack(title, fileUrl, queueIdx, durationStr) {
+        if (historicPlayedTracks.some(item => item.queueIndex === queueIdx)) return;
+        historicPlayedTracks.push({ title, queueIndex: queueIdx });
+
+        const placeholder = document.getElementById('historyPlaceholder');
+        if (placeholder) placeholder.remove();
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><a class="history-track-title" onclick="playTrackFromQueue(${Number(queueIdx)})">${escapeHTML(title)}</a></td>
+            <td><a href="${escapeHTML(fileUrl)}" class="history-file-link" target="_blank" rel="noopener noreferrer">Wiki File Page</a></td>
+            <td class="history-duration">${escapeHTML(durationStr)}</td>
+        `;
+        historyTableBody.insertBefore(tr, historyTableBody.firstChild);
+    }
+
+    function toggleMinimizeHistory() {
+        if (historyWrapper.style.display === "none") {
+            historyWrapper.style.display = "block";
+            minimizeBtn.innerText = "Minimize";
+        } else {
+            historyWrapper.style.display = "none";
+            minimizeBtn.innerText = "Maximize";
+        }
+    }
+
+    function formatTime(secs) {
+        if(isNaN(secs)) return "0:00";
+        const m = Math.floor(secs / 60);
+        const s = Math.floor(secs % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    audioPlayer.addEventListener('play', () => { isPlaying = true; updateButtonStates(); });
+    audioPlayer.addEventListener('pause', () => { isPlaying = false; updateButtonStates(); });
+    audioPlayer.addEventListener('ended', () => { if (!isLooping) playNext(); });
+    audioPlayer.addEventListener('timeupdate', () => {
+        if (!isNaN(audioPlayer.duration)) {
+            const pct = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            scrubBar.value = pct;
+            currentTimeEl.innerText = formatTime(audioPlayer.currentTime);
+            if(pipWindow) {
+                const pipScrub = pipWindow.document.getElementById('pipScrub');
+                const pipTime = pipWindow.document.getElementById('pipTime');
+                if(pipScrub) pipScrub.value = pct;
+                if(pipTime) pipTime.innerText = `${formatTime(audioPlayer.currentTime)} / ${formatTime(audioPlayer.duration)}`;
+            }
+        }
+    });
+
+    scrubBar.addEventListener('input', () => {
+        if (!isNaN(audioPlayer.duration)) audioPlayer.currentTime = (scrubBar.value / 100) * audioPlayer.duration;
+    });
+    volumeSlider.addEventListener('input', (e) => { 
+        audioPlayer.volume = e.target.value; 
+        if(pipWindow) {
+            const pipVol = pipWindow.document.getElementById('pipVol');
+            if(pipVol) pipVol.value = e.target.value;
+        }
+    });
+
+    const pipSupported = 'documentPictureInPicture' in window;
+    if (!pipSupported) {
+        const pipBtn = document.getElementById('pipBtn');
+        if (pipBtn) {
+            pipBtn.disabled = true;
+            pipBtn.title = "Pop-out player isn't supported in this browser";
+            pipBtn.style.opacity = '0.5';
+            pipBtn.style.cursor = 'not-allowed';
+        }
+    }
+
+    async function toggleMiniPlayer() {
+        if (!pipSupported) return;
+        if (pipWindow) { pipWindow.close(); return; }
+
+        try {
+            pipWindow = await window.documentPictureInPicture.requestWindow({ width: 480, height: 110 });
+            const style = document.createElement('style');
+            style.textContent = `
+                body {
+                    margin: 0; padding: 8px;
+                    background: var(--container-bg, #141721);
+                    color: var(--text-color, #fff);
+                    font-family: system-ui, sans-serif; overflow: hidden;
+                    display: flex; flex-direction: column; justify-content: center; height: 100vh; box-sizing: border-box;
+                    transition: background 0.3s ease, color 0.3s ease;
+                }
+                .mini-player { display: flex; flex-direction: column; gap: 4px; }
+                .text-row { display: flex; justify-content: space-between; font-size: 0.75rem; white-space: nowrap; overflow: hidden; }
+                .title-line { font-weight: bold; color: var(--accent-color, #34c759); text-overflow: ellipsis; overflow: hidden; max-width: 70%; text-decoration: none; }
+                .title-line:hover { text-decoration: underline; }
+                .attr-line { color: var(--secondary-text, #aaa); text-overflow: ellipsis; overflow: hidden; max-width: 60%; font-size: 0.68rem; }
+                .controls-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+                .btn-group { display: flex; gap: 4px; }
+                button { background: var(--border-color, #2a2e3d); color: var(--text-color, #fff); border: none; padding: 4px 10px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background 0.2s ease; }
+                button:hover { filter: brightness(1.2); }
+                #pipPlayBtn { background: var(--accent-color, #34c759); color: #fff; }
+                .scrub { flex-grow: 1; height: 4px; accent-color: var(--accent-color, #34c759); margin: 0 4px; }
+                .right-controls { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--secondary-text, #aaa); }
+                input[type="range"] { cursor: pointer; }
+            `;
+            pipWindow.document.head.appendChild(style);
+            syncPiPTheme(); // Apply the current app theme immediately, before first paint
+
+            const container = pipWindow.document.createElement('div');
+            container.className = 'mini-player';
+            container.innerHTML = `
+                <div class="text-row">
+                    <a id="pipTitleLink" target="_blank" class="title-line">Loading...</a>
+                    <span id="pipTime" style="font-weight:bold;">0:00 / 0:00</span>
+                </div>
+                <div class="text-row">
+                    <span class="attr-line" id="pipAttr">Loading attribution metadata...</span>
+                    <span id="pipDate" style="color:var(--secondary-text, #888); font-size:0.68rem;"></span>
+                </div>
+                <div class="controls-row">
+                    <div class="btn-group">
+                        <button onclick="window.opener.playPrevious()">⏮</button>
+                        <button id="pipPlayBtn" onclick="window.opener.toggleRadio()">▶</button>
+                        <button onclick="window.opener.playNext()">⏭</button>
+                        <button id="pipLoopBtn" onclick="window.opener.toggleLoop()">🔁</button>
+                    </div>
+                    <input type="range" id="pipScrub" class="scrub" value="0" min="0" max="100" step="1">
+                    <div class="right-controls">
+                        <span>🔊</span>
+                        <input type="range" id="pipVol" style="width:45px; accent-color:var(--accent-color, #34c759);" min="0" max="1" step="0.05" value="${audioPlayer.volume}">
+                        <button onclick="window.close()" style="background:#dd3333; color:white; padding: 2px 6px; font-size:0.65rem;">X</button>
+                    </div>
+                </div>
+            `;
+            pipWindow.document.body.appendChild(container);
+
+            pipWindow.document.getElementById('pipScrub').addEventListener('input', (e) => {
+                if (!isNaN(audioPlayer.duration)) audioPlayer.currentTime = (e.target.value / 100) * audioPlayer.duration;
+            });
+            pipWindow.document.getElementById('pipVol').addEventListener('input', (e) => {
+                audioPlayer.volume = e.target.value;
+                volumeSlider.value = e.target.value;
+            });
+
+            updatePiPContent();
+            updateButtonStates();
+            pipWindow.addEventListener('pagehide', () => { pipWindow = null; });
+        } catch (error) {
+            console.error("PiP init failed", error);
+            alert("Couldn't open the pop-out player window. Your browser may have blocked it — check your popup permissions and try again.");
+        }
+    }
+
+    function updatePiPContent() {
+        if (!pipWindow || !currentActiveTrackPayload) return;
+        const p = currentActiveTrackPayload;
+        const titleLink = pipWindow.document.getElementById('pipTitleLink');
+        titleLink.innerText = p.title;
+        titleLink.setAttribute('href', p.descriptionUrl);
+        pipWindow.document.getElementById('pipAttr').innerText = `${p.authorTextOnly} [${p.licenseName}] via Wikimedia Commons`;
+        pipWindow.document.getElementById('pipDate').innerText = p.date;
+    }
+</script>
+
+</body>
+</html>
