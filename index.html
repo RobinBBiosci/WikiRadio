@@ -3,12 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WikiRadio</title>
-    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
-    <link rel="manifest" href="assets/site.webmanifest"> 
+    <title>Wiki Commons Deep Radio</title>
     <style>
         :root {
             --bg-color: #10141d;
@@ -241,6 +236,50 @@
         .history-track-title:hover { color: var(--accent-color); text-decoration: underline; }
         .history-file-link { color: var(--accent-color); }
         .history-duration { text-align: right; }
+
+        .about-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .about-overlay.open { display: flex; }
+
+        .about-panel {
+            background: var(--container-bg);
+            color: var(--text-color);
+            border-radius: 12px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 28px;
+            box-sizing: border-box;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+            position: relative;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        .about-panel h3 { margin: 0 0 12px 0; color: var(--accent-color); font-size: 1.3rem; }
+        .about-panel p { line-height: 1.55; font-size: 0.92rem; color: var(--text-color); margin: 0 0 14px 0; }
+        .about-panel ul { padding-left: 20px; font-size: 0.9rem; color: var(--text-color); line-height: 1.6; margin: 0 0 14px 0; }
+        .about-panel a { color: var(--accent-color); font-weight: 600; }
+        .about-close {
+            position: absolute;
+            top: 12px; right: 12px;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: var(--secondary-text);
+            padding: 4px 8px;
+            line-height: 1;
+        }
+        .about-close:hover { color: var(--text-color); }
     </style>
 </head>
 <body>
@@ -252,6 +291,7 @@
             <div class="utility-buttons">
                 <button class="circle-btn" onclick="applyRandomBranding()" title="Randomize Wiki Color Theme" aria-label="Randomize color theme">🎨</button>
                 <button class="circle-btn" onclick="toggleColorDrawer()" title="Custom Brush Controls" aria-label="Toggle custom color controls">🖌️</button>
+                <button class="circle-btn" id="infoBtn" onclick="toggleAboutPanel()" title="About this app" aria-label="About this app" aria-haspopup="dialog" aria-expanded="false" style="font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: bold;">i</button>
             </div>
         </div>
         <h2>Your Open Radio</h2>
@@ -328,6 +368,26 @@
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
+
+<div class="about-overlay" id="aboutOverlay">
+    <div class="about-panel" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+        <button class="about-close" onclick="closeAboutPanel()" aria-label="Close about panel">✕</button>
+        <h3 id="aboutTitle">About WikiRadio</h3>
+        <p>WikiRadio is an open, ad-free "radio station" that streams freely-licensed audio pulled live from <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a>. Remember, always provide attribution to the files you use if the license requires it!</p>
+        <p><b>Instructions</b></p>
+        <ul>
+            <li>Click "Tune in" to start listening.</li>
+            <li>Prev" will play the last file while "Skip" will play the next file in the queue.</li>
+            <li>Toggle the "Loop" button to repeat or stop repeating a track.</li>
+            <li>"Pop out" will pop out a tiny streaming window with basic track information.</li>
+            <li>Control volume with the 🔊 audio slider.</li>
+            <li>Click the color palette icon (🎨) to randomize the page's color scheme.</li>
+            <li>Click the paintbrush icon (🖌️) to customize the page's color scheme.</li>
+        </ul>
+        <p>For more information, see the <a href="https://github.com/RobinBBiosci/WikiRadio" target="_blank" rel="noopener noreferrer"> README document on Github</a>.<br>
+            <i>Created by Robin Isadora Brown.</i></p>
     </div>
 </div>
 
@@ -1076,6 +1136,25 @@
             alert("Couldn't open the pop-out player window. Your browser may have blocked it — check your popup permissions and try again.");
         }
     }
+
+    function toggleAboutPanel() {
+        const overlay = document.getElementById('aboutOverlay');
+        overlay.classList.contains('open') ? closeAboutPanel() : openAboutPanel();
+    }
+    function openAboutPanel() {
+        document.getElementById('aboutOverlay').classList.add('open');
+        document.getElementById('infoBtn').setAttribute('aria-expanded', 'true');
+    }
+    function closeAboutPanel() {
+        document.getElementById('aboutOverlay').classList.remove('open');
+        document.getElementById('infoBtn').setAttribute('aria-expanded', 'false');
+    }
+    document.getElementById('aboutOverlay').addEventListener('click', (e) => {
+        if (e.target.id === 'aboutOverlay') closeAboutPanel();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAboutPanel();
+    });
 
     function updatePiPContent() {
         if (!pipWindow || !currentActiveTrackPayload) return;
